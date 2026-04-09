@@ -23,12 +23,15 @@ For "invoice_wording": write a brief rebill description in this format:
 "[unit] - BB for [short plain-English summary of the main work done]"
 Example: "1234 - BB for A service and brake repair"
 
+For "misc": the dollar amount of any misc/shop supplies, environmental fees, or supply charges listed separately on the RO. Use null if none found.
+
 {
   "vendor": "shop name",
   "invoice_number": "invoice or RO number",
   "date": "YYYY-MM-DD",
   "unit": "vehicle unit number",
   "invoice_wording": "unit - BB for ...",
+  "misc": 12.50,
   "line_items": [
     {"description": "Oil & Filter Change", "cost": 85.00, "type": "pm"},
     {"description": "Front brake pads", "cost": 210.50, "type": "repair"}

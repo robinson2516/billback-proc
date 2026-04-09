@@ -45,6 +45,7 @@ function populateForm(data) {
   document.getElementById('f-vendor').value  = data.vendor          ?? '';
   document.getElementById('f-invoice').value = data.invoice_number  ?? '';
   document.getElementById('f-wording').value = data.invoice_wording ?? '';
+  document.getElementById('f-misc').value    = data.misc ?? '';
 
   // Date
   const dateVal = data.date ?? new Date().toISOString().slice(0, 10);
