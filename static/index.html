@@ -91,6 +91,10 @@
             <label>Invoice Wording <span class="badge ai">AI</span></label>
             <input type="text" id="f-wording" />
           </div>
+          <div class="field-group">
+            <label>Misc / Shop Supplies <span class="badge manual">Manual</span></label>
+            <input type="number" id="f-misc" step="0.01" min="0" placeholder="0.00" />
+          </div>
         </div>
 
         <!-- Line Items -->
@@ -99,7 +103,6 @@
           <span class="li-desc-hdr">Description</span>
           <span class="li-cost-hdr">Cost</span>
           <span class="li-type-hdr">Category</span>
-          <span class="li-rebill-hdr">Rebill?</span>
         </div>
         <div id="line-items-list"></div>
 

@@ -68,11 +68,11 @@ function renderLineItems(items) {
   }
 
   container.innerHTML = items.map((item, idx) => {
-    const type    = (item.type || 'repair').toLowerCase();
-    const isPm    = type === 'pm';
-    const cost    = parseFloat(item.cost || 0).toFixed(2);
-    const pmActive     = isPm ? 'active-pm'     : '';
-    const repairActive = !isPm ? 'active-repair' : '';
+    const type   = (item.type || 'repair').toLowerCase();
+    const cost   = parseFloat(item.cost || 0).toFixed(2);
+    const pmActive     = type === 'pm'     ? 'active-pm'     : '';
+    const repairActive = type === 'repair' ? 'active-repair' : '';
+    const rebillActive = type === 'rebill' ? 'active-rebill' : '';
 
     return `
       <div class="line-item-row" data-idx="${idx}">
@@ -80,12 +80,11 @@ function renderLineItems(items) {
         <span class="li-cost">$${Number(cost).toLocaleString('en-US', {minimumFractionDigits:2})}</span>
         <div class="type-toggle">
           <button type="button" class="type-btn ${pmActive}" data-idx="${idx}" data-type="pm"
-            onclick="setType(${idx}, 'pm')">Internal PMs</button>
+            onclick="setType(${idx}, 'pm')">Int. PMs</button>
           <button type="button" class="type-btn ${repairActive}" data-idx="${idx}" data-type="repair"
-            onclick="setType(${idx}, 'repair')">Internal Repairs</button>
-        </div>
-        <div class="rebill-check">
-          <input type="checkbox" id="rebill-${idx}" title="Include in Rebill column" />
+            onclick="setType(${idx}, 'repair')">Int. Repairs</button>
+          <button type="button" class="type-btn ${rebillActive}" data-idx="${idx}" data-type="rebill"
+            onclick="setType(${idx}, 'rebill')">Rebill</button>
         </div>
       </div>`;
   }).join('');
@@ -95,22 +94,25 @@ function renderLineItems(items) {
 }
 
 function setType(idx, type) {
-  const row     = document.querySelector(`.line-item-row[data-idx="${idx}"]`);
-  const pmBtn   = row.querySelector('[data-type="pm"]');
-  const repBtn  = row.querySelector('[data-type="repair"]');
-  pmBtn.className  = 'type-btn' + (type === 'pm'     ? ' active-pm'     : '');
-  repBtn.className = 'type-btn' + (type === 'repair' ? ' active-repair' : '');
+  const row = document.querySelector(`.line-item-row[data-idx="${idx}"]`);
+  row.querySelectorAll('.type-btn').forEach(b => {
+    b.className = 'type-btn';
+    if (b.dataset.type === type) {
+      if (type === 'pm')     b.classList.add('active-pm');
+      if (type === 'repair') b.classList.add('active-repair');
+      if (type === 'rebill') b.classList.add('active-rebill');
+    }
+  });
 }
 
 function getLineItems() {
   const container = document.getElementById('line-items-list');
   const base      = JSON.parse(container.dataset.items || '[]');
   return base.map((item, idx) => {
-    const row    = document.querySelector(`.line-item-row[data-idx="${idx}"]`);
-    const pmBtn  = row?.querySelector('[data-type="pm"]');
-    const type   = pmBtn?.classList.contains('active-pm') ? 'pm' : 'repair';
-    const rebill = document.getElementById(`rebill-${idx}`)?.checked || false;
-    return { ...item, type, rebill };
+    const row       = document.querySelector(`.line-item-row[data-idx="${idx}"]`);
+    const activeBtn = row?.querySelector('.type-btn.active-pm, .type-btn.active-repair, .type-btn.active-rebill');
+    const type      = activeBtn?.dataset.type || 'repair';
+    return { ...item, type };
   });
 }
 
@@ -132,6 +134,7 @@ document.getElementById('btn-generate').addEventListener('click', async () => {
     customer:         document.getElementById('f-customer').value,
     invoice_wording:  document.getElementById('f-wording').value,
     line_items:       getLineItems(),
+    misc:             parseFloat(document.getElementById('f-misc').value) || 0,
   };
 
   try {
