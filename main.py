@@ -58,10 +58,13 @@ async def generate(body: dict):
     output = fill_rebill_sheet(body)
 
     unit    = re.sub(r"[^\w\s-]", "", body.get("unit") or "").strip()
-    wording = re.sub(r"[^\w\s\-]", "", body.get("invoice_wording") or "").strip()
+    wording = body.get("invoice_wording") or ""
+    # Extract the short description after "BB for" (e.g. "1234 - BB for brakes" → "brakes")
+    bb_match = re.search(r"bb for (.+)", wording, re.IGNORECASE)
+    reason  = re.sub(r"[^\w\s-]", "", bb_match.group(1) if bb_match else wording).strip()
     now     = datetime.now()
     date_str = f"{now.month}.{now.day}.{str(now.year)[2:]}"
-    filename = f"{unit} {wording} {date_str}.xlsm"
+    filename = f"{unit} {reason} {date_str}.xlsm"
 
     return StreamingResponse(
         io.BytesIO(output),
