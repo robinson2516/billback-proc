@@ -16,8 +16,14 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.get("/api/debug")
 async def debug():
     import os
-    key = os.environ.get("ANTHROPIC_API_KEY")
-    return {"key_present": bool(key), "key_length": len(key) if key else 0}
+    key = os.environ.get("ANTHROPIC_API_KEY", "")
+    return {
+        "key_present": bool(key),
+        "key_length": len(key),
+        "key_prefix": key[:14] if key else None,
+        "has_spaces": " " in key,
+        "has_quotes": '"' in key or "'" in key,
+    }
 
 
 @app.get("/", response_class=HTMLResponse)

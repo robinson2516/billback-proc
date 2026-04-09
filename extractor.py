@@ -37,7 +37,7 @@ Example: "1234 - BB for A service and brake repair"
 
 
 async def extract_fields(pdf_bytes: bytes) -> dict:
-    client = anthropic.Anthropic()
+    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", "").strip())
     pdf_b64 = base64.standard_b64encode(pdf_bytes).decode("utf-8")
 
     message = client.messages.create(
