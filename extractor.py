@@ -6,7 +6,6 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 SYSTEM_PROMPT = """You are an expert at reading vehicle repair orders for a fleet leasing company.
 Extract structured data to populate a bill-back rebill sheet. Return ONLY valid JSON with these exact keys.
@@ -38,6 +37,7 @@ Example: "1234 - BB for A service and brake repair"
 
 
 async def extract_fields(pdf_bytes: bytes) -> dict:
+    client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
     pdf_b64 = base64.standard_b64encode(pdf_bytes).decode("utf-8")
 
     message = client.messages.create(
