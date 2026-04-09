@@ -24,11 +24,17 @@ async def extract(file: UploadFile = File(...)):
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are supported.")
     pdf_bytes = await file.read()
-    fields = await extract_fields(pdf_bytes)
+    try:
+        fields = await extract_fields(pdf_bytes)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Extraction error: {e}")
 
     # Auto-detect Lease or Rental from unit number
     unit = fields.get("unit") or ""
-    fields["lease_or_rental"] = lookup_unit(unit)
+    try:
+        fields["lease_or_rental"] = lookup_unit(unit)
+    except Exception as e:
+        fields["lease_or_rental"] = "Lease"
 
     return fields
 
