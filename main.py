@@ -13,6 +13,13 @@ app = FastAPI(title="Bill Back Generator")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
+@app.get("/api/debug")
+async def debug():
+    import os
+    key = os.environ.get("ANTHROPIC_API_KEY")
+    return {"key_present": bool(key), "key_length": len(key) if key else 0}
+
+
 @app.get("/", response_class=HTMLResponse)
 async def root():
     with open("static/index.html") as f:
