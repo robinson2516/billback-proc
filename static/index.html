@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bill Back Generator</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon">📋</span>
+      <span class="logo-text">BillBack</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active">
+        <svg viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M16 12l-4-4-4 4M12 8v8"/></svg>
+        Generate Rebill
+      </a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <section id="view-upload">
+      <header class="page-header">
+        <div>
+          <h1>Bill Back Generator</h1>
+          <p class="subtitle">Drop a repair order and generate a filled rebill sheet</p>
+        </div>
+      </header>
+
+      <!-- Drop Zone -->
+      <div class="upload-card" id="upload-card">
+        <div id="drop-zone" class="drop-zone">
+          <div class="drop-icon">
+            <svg viewBox="0 0 24 24"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3-3 3M12 10v8"/></svg>
+          </div>
+          <p class="drop-title">Drag & drop your repair order</p>
+          <p class="drop-sub">or <label for="file-input" class="browse-link">browse files</label></p>
+          <input type="file" id="file-input" accept=".pdf" hidden />
+        </div>
+        <div id="processing" class="processing hidden">
+          <div class="spinner"></div>
+          <p>Extracting data with AI...</p>
+        </div>
+      </div>
+
+      <!-- Review Form -->
+      <div id="review-card" class="review-card hidden">
+        <div class="review-header">
+          <div>
+            <h2>Review &amp; Generate</h2>
+            <p class="subtitle">Verify the extracted fields, classify line items, and mark any to rebill.</p>
+          </div>
+          <button id="btn-discard" class="btn btn-ghost">Discard</button>
+        </div>
+
+        <!-- Header Fields -->
+        <div class="fields-grid">
+          <div class="field-group ai-field">
+            <label>Vendor <span class="badge ai">AI</span></label>
+            <input type="text" id="f-vendor" />
+          </div>
+          <div class="field-group ai-field">
+            <label>Invoice # <span class="badge ai">AI</span></label>
+            <input type="text" id="f-invoice" />
+          </div>
+          <div class="field-group ai-field">
+            <label>Date <span class="badge ai">AI</span></label>
+            <input type="date" id="f-date" />
+          </div>
+          <div class="field-group ai-field">
+            <label>Lease or Rental? <span class="badge ai">AI</span></label>
+            <select id="f-lease">
+              <option value="Lease">Lease</option>
+              <option value="Rental">Rental</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>Taxable? <span class="badge manual">Manual</span></label>
+            <select id="f-taxable">
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>Customer <span class="badge manual">Manual</span></label>
+            <input type="text" id="f-customer" placeholder="Enter customer name / account" />
+          </div>
+          <div class="field-group ai-field full-width">
+            <label>Invoice Wording <span class="badge ai">AI</span></label>
+            <input type="text" id="f-wording" />
+          </div>
+        </div>
+
+        <!-- Line Items -->
+        <div class="section-label">Line Items</div>
+        <div class="line-items-header">
+          <span class="li-desc-hdr">Description</span>
+          <span class="li-cost-hdr">Cost</span>
+          <span class="li-type-hdr">Category</span>
+          <span class="li-rebill-hdr">Rebill?</span>
+        </div>
+        <div id="line-items-list"></div>
+
+        <div class="review-actions">
+          <button id="btn-generate" class="btn btn-primary">
+            <svg viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M7 10l5 5 5-5M12 15V3"/></svg>
+            Download Rebill Sheet
+          </button>
+        </div>
+      </div>
+
+      <div id="toast" class="toast hidden"></div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
