@@ -4,6 +4,7 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 import uvicorn
 import io
 import re
+from datetime import datetime
 
 from extractor import extract_fields
 from filler import fill_rebill_sheet
@@ -56,9 +57,11 @@ async def extract(file: UploadFile = File(...)):
 async def generate(body: dict):
     output = fill_rebill_sheet(body)
 
-    vendor   = re.sub(r"[^\w\s-]", "", body.get("vendor") or "Rebill").strip().replace(" ", "_")
-    invoice  = re.sub(r"[^\w-]",   "", body.get("invoice_number") or "")
-    filename = f"Rebill_{vendor}_{invoice}.xlsm"
+    unit    = re.sub(r"[^\w\s-]", "", body.get("unit") or "").strip()
+    wording = re.sub(r"[^\w\s\-]", "", body.get("invoice_wording") or "").strip()
+    now     = datetime.now()
+    date_str = f"{now.month}.{now.day}.{str(now.year)[2:]}"
+    filename = f"{unit} {wording} {date_str}.xlsm"
 
     return StreamingResponse(
         io.BytesIO(output),
