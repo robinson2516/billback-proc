@@ -32,11 +32,9 @@ def _match_vendor(name: str) -> str:
     if not name:
         return name
     normalized = name.lower()
-    # Exact match first
     for v in _VENDOR_LIST:
         if v.lower() == normalized:
             return v
-    # Any word in the extracted name matches a word in a vendor entry
     words = set(normalized.split())
     for v in _VENDOR_LIST:
         if any(w in v.lower().split() for w in words):
@@ -44,12 +42,38 @@ def _match_vendor(name: str) -> str:
     return name
 
 
+def _load_labor_rates(wb) -> dict:
+    """Return {vendor_name_lower: (current_rate, pac_rate)} from LaborRates sheet."""
+    rates = {}
+    if "LaborRates" not in wb.sheetnames:
+        return rates
+    lr = wb["LaborRates"]
+    for row in lr.iter_rows(min_row=2, values_only=True):
+        vendor, _, current, pac = (row[i] if i < len(row) else None for i in range(4))
+        if vendor and current and pac:
+            try:
+                rates[str(vendor).strip().lower()] = (float(current), float(pac))
+            except (ValueError, TypeError):
+                continue
+    return rates
+
+
 def fill_rebill_sheet(data: dict) -> bytes:
     wb = openpyxl.load_workbook(TEMPLATE, keep_vba=True)
     ws = wb["Rebill Sheet"]
 
-    # ── Header fields ────────────────────────────────────────────
-    ws.cell(row=1, column=4).value  = _match_vendor(data.get("vendor") or "")
+    # Force Excel to recalculate all formulas on open
+    wb.calculation.calcMode = "auto"
+    wb.calculation.fullCalcOnLoad = True
+
+    # ── Vendor & labor rates ──────────────────────────────────────
+    vendor_name = _match_vendor(data.get("vendor") or "")
+    ws.cell(row=1, column=4).value = vendor_name
+
+    labor_rates = _load_labor_rates(wb)
+    current_rate, pac_rate = labor_rates.get(vendor_name.strip().lower(), (0.0, 0.0))
+
+    # ── Header fields ─────────────────────────────────────────────
     ws.cell(row=1, column=17).value = data.get("customer") or ""
     ws.cell(row=2, column=4).value  = data.get("invoice_number") or ""
     ws.cell(row=2, column=17).value = data.get("taxable") or "Yes"
@@ -57,7 +81,7 @@ def fill_rebill_sheet(data: dict) -> bytes:
     ws.cell(row=4, column=4).value  = data.get("lease_or_rental") or "Lease"
     ws.cell(row=4, column=15).value = data.get("invoice_wording") or ""
 
-    # ── Misc / shop supplies → K9 ────────────────────────────────
+    # ── Misc / shop supplies → K9 ─────────────────────────────────
     try:
         misc = float(data.get("misc") or 0)
     except (ValueError, TypeError):
@@ -70,6 +94,7 @@ def fill_rebill_sheet(data: dict) -> bytes:
     #   Col C (3)  — Rebill Labor
     #   Col D (4)  — Internal PMs
     #   Col E (5)  — Internal Repairs
+    # For rebill labor rows, also populate Q/R/S (hours, rate, total)
     line_items = data.get("line_items", [])
     total = 0.0
     row = LINE_ITEM_START_ROW
@@ -90,6 +115,14 @@ def fill_rebill_sheet(data: dict) -> bytes:
         elif item_type == "rebill":
             if item_category == "labor":
                 ws.cell(row=row, column=3).value = cost
+                # Calculate and write Q (hours), R (rate), S (total)
+                if pac_rate and current_rate:
+                    hours     = round(cost / pac_rate, 2)
+                    adj_rate  = round(current_rate - 10, 2)
+                    lab_total = round(hours * adj_rate, 2)
+                    ws.cell(row=row, column=17).value = hours
+                    ws.cell(row=row, column=18).value = adj_rate
+                    ws.cell(row=row, column=19).value = lab_total
             else:
                 ws.cell(row=row, column=2).value = cost
         else:  # repair
