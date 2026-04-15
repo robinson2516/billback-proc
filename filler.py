@@ -4,7 +4,7 @@ from pathlib import Path
 import openpyxl
 
 BASE_DIR = Path(__file__).parent
-TEMPLATE = BASE_DIR / "1 REBILL BLANK.xlsm"
+TEMPLATE = BASE_DIR / "1 REBILL_BLANK_updated.xlsm"
 
 LINE_ITEM_START_ROW = 15   # line items begin at row 15
 
