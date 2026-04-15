@@ -27,14 +27,25 @@ _VENDOR_LIST = [
 ]
 
 
+_VENDOR_ALIASES = {
+    "salt lake city": "Peterbilt of Utah",
+    "slc":            "Peterbilt of Utah",
+}
+
+
 def _match_vendor(name: str) -> str:
     """Return the exact Keys-sheet vendor string closest to `name`, or `name` if no match."""
     if not name:
         return name
-    normalized = name.lower()
+    normalized = name.strip().lower()
+    # Check aliases first
+    if normalized in _VENDOR_ALIASES:
+        return _VENDOR_ALIASES[normalized]
+    # Exact match
     for v in _VENDOR_LIST:
         if v.lower() == normalized:
             return v
+    # Any word match
     words = set(normalized.split())
     for v in _VENDOR_LIST:
         if any(w in v.lower().split() for w in words):
