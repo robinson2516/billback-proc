@@ -69,11 +69,14 @@ function renderLineItems(items) {
   }
 
   container.innerHTML = items.map((item, idx) => {
-    const type   = (item.type || 'repair').toLowerCase();
-    const cost   = parseFloat(item.cost || 0).toFixed(2);
+    const type     = (item.type     || 'repair').toLowerCase();
+    const category = (item.category || 'parts').toLowerCase();
+    const cost     = parseFloat(item.cost || 0).toFixed(2);
     const pmActive     = type === 'pm'     ? 'active-pm'     : '';
     const repairActive = type === 'repair' ? 'active-repair' : '';
     const rebillActive = type === 'rebill' ? 'active-rebill' : '';
+    const partsActive  = category === 'parts'  ? 'active-parts'  : '';
+    const laborActive  = category === 'labor'  ? 'active-labor'  : '';
 
     return `
       <div class="line-item-row" data-idx="${idx}">
@@ -86,6 +89,12 @@ function renderLineItems(items) {
             onclick="setType(${idx}, 'repair')">Int. Repairs</button>
           <button type="button" class="type-btn ${rebillActive}" data-idx="${idx}" data-type="rebill"
             onclick="setType(${idx}, 'rebill')">Rebill</button>
+        </div>
+        <div class="category-toggle">
+          <button type="button" class="cat-btn ${partsActive}" data-idx="${idx}" data-cat="parts"
+            onclick="setCategory(${idx}, 'parts')">Parts</button>
+          <button type="button" class="cat-btn ${laborActive}" data-idx="${idx}" data-cat="labor"
+            onclick="setCategory(${idx}, 'labor')">Labor</button>
         </div>
       </div>`;
   }).join('');
@@ -106,14 +115,26 @@ function setType(idx, type) {
   });
 }
 
+function setCategory(idx, cat) {
+  const row = document.querySelector(`.line-item-row[data-idx="${idx}"]`);
+  row.querySelectorAll('.cat-btn').forEach(b => {
+    b.className = 'cat-btn';
+    if (b.dataset.cat === cat) {
+      b.classList.add(cat === 'parts' ? 'active-parts' : 'active-labor');
+    }
+  });
+}
+
 function getLineItems() {
   const container = document.getElementById('line-items-list');
   const base      = JSON.parse(container.dataset.items || '[]');
   return base.map((item, idx) => {
     const row       = document.querySelector(`.line-item-row[data-idx="${idx}"]`);
     const activeBtn = row?.querySelector('.type-btn.active-pm, .type-btn.active-repair, .type-btn.active-rebill');
+    const activeCat = row?.querySelector('.cat-btn.active-parts, .cat-btn.active-labor');
     const type      = activeBtn?.dataset.type || 'repair';
-    return { ...item, type };
+    const category  = activeCat?.dataset.cat  || 'parts';
+    return { ...item, type, category };
   });
 }
 

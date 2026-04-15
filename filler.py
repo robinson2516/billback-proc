@@ -65,14 +65,15 @@ def fill_rebill_sheet(data: dict) -> bytes:
     ws.cell(row=9, column=11).value = misc if misc else None
 
     # ── Line items ────────────────────────────────────────────────
-    # Each item goes into ONE column based on type:
-    #   Col B (2)  — Rebill
+    # Column mapping:
+    #   Col B (2)  — Rebill Parts
+    #   Col C (3)  — Rebill Labor
     #   Col D (4)  — Internal PMs
     #   Col E (5)  — Internal Repairs
     line_items = data.get("line_items", [])
     total = 0.0
-    for i, item in enumerate(line_items):
-        row = LINE_ITEM_START_ROW + i
+    row = LINE_ITEM_START_ROW
+    for item in line_items:
         try:
             cost = float(item.get("cost") or 0)
         except (ValueError, TypeError):
@@ -81,13 +82,20 @@ def fill_rebill_sheet(data: dict) -> bytes:
             continue
 
         total += cost
-        item_type = (item.get("type") or "repair").lower()
+        item_type     = (item.get("type")     or "repair").lower()
+        item_category = (item.get("category") or "parts").lower()
+
         if item_type == "pm":
             ws.cell(row=row, column=4).value = cost
         elif item_type == "rebill":
-            ws.cell(row=row, column=2).value = cost
-        else:
+            if item_category == "labor":
+                ws.cell(row=row, column=3).value = cost
+            else:
+                ws.cell(row=row, column=2).value = cost
+        else:  # repair
             ws.cell(row=row, column=5).value = cost
+
+        row += 1
 
     # ── Invoice total (line items + misc) → L12 ──────────────────
     inv_total = total + misc

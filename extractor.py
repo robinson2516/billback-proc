@@ -14,8 +14,9 @@ For "vendor": the shop/dealer name (if Jackson Group Peterbilt, use only the cit
 For "date": use YYYY-MM-DD format.
 For "line_items": extract EVERY individual labor and parts charge as a separate item. For each:
   - "description": brief description of the work or part
-  - "cost": the dollar amount (number only, no $ or commas). If a line has both parts and labor, split them.
+  - "cost": the dollar amount (number only, no $ or commas). If a line has both parts and labor, split them into separate items.
   - "type": classify as "pm" (preventive maintenance — oil changes, filters, fluid services, greasing, A/B service, inspections, PMs) OR "repair" (fixing broken/worn components, replacements due to failure, diagnostics)
+  - "category": classify as "parts" (physical parts, materials, supplies) OR "labor" (labor charges, labor hours, installation, diagnostic time)
 
 Ignore courtesy inspections and campaigns entirely.
 
@@ -33,8 +34,10 @@ For "misc": the dollar amount of any misc/shop supplies, environmental fees, or 
   "invoice_wording": "unit - BB for ...",
   "misc": 12.50,
   "line_items": [
-    {"description": "Oil & Filter Change", "cost": 85.00, "type": "pm"},
-    {"description": "Front brake pads", "cost": 210.50, "type": "repair"}
+    {"description": "Oil & Filter Change Labor", "cost": 45.00, "type": "pm", "category": "labor"},
+    {"description": "Oil Filter", "cost": 40.00, "type": "pm", "category": "parts"},
+    {"description": "Front brake pads", "cost": 210.50, "type": "repair", "category": "parts"},
+    {"description": "Brake Labor", "cost": 120.00, "type": "repair", "category": "labor"}
   ]
 }"""
 
