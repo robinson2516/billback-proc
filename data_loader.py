@@ -4,8 +4,8 @@ from datetime import date
 import openpyxl
 
 BASE_DIR = Path(__file__).parent
-UNIT_FILE = Path("C:/Users/jmrob/Projects/Bill Backs/Unit numbers and descriptions  (1).xlsx")
-CUSTOMER_FILE = Path("C:/Users/jmrob/Projects/Bill Backs/Customer numbers.xlsx")
+UNIT_FILE = BASE_DIR / "Unit numbers and descriptions  (1).xlsx"
+CUSTOMER_FILE = BASE_DIR / "Customer numbers.xlsx"
 
 _unit_data = None
 _unit_loaded_date = None
