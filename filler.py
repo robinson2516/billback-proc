@@ -77,6 +77,9 @@ def fill_rebill_sheet(data: dict) -> bytes:
     wb.calculation.calcMode = "auto"
     wb.calculation.fullCalcOnLoad = True
 
+    # Set sheet zoom to 100%
+    ws.sheet_view.zoomScale = 100
+
     # ── Vendor & labor rates ──────────────────────────────────────
     vendor_name = _match_vendor(data.get("vendor") or "")
     ws.cell(row=1, column=4).value = vendor_name

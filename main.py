@@ -8,7 +8,7 @@ from datetime import datetime
 
 from extractor import extract_fields
 from filler import fill_rebill_sheet
-from data_loader import lookup_unit
+from data_loader import lookup_unit, lookup_customer, lookup_owner, lookup_email
 
 app = FastAPI(title="Bill Back Generator")
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -43,12 +43,40 @@ async def extract(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Extraction error: {e}")
 
-    # Auto-detect Lease or Rental from unit number
     unit = fields.get("unit") or ""
+
+    # Lease/Rental from unit lookup
     try:
         fields["lease_or_rental"] = lookup_unit(unit)
-    except Exception as e:
+    except Exception:
         fields["lease_or_rental"] = "Lease"
+
+    # Customer name + number from Customer Numbers spreadsheet
+    try:
+        cust_num, cust_name = lookup_customer(unit)
+        if cust_num and cust_name:
+            fields["customer"] = f"{cust_num} {cust_name}"
+        elif cust_name:
+            fields["customer"] = cust_name
+        elif cust_num:
+            fields["customer"] = cust_num
+        else:
+            fields["customer"] = ""
+    except Exception:
+        fields["customer"] = ""
+
+    # Owner and email — append contact line to invoice wording
+    try:
+        owner = lookup_owner(unit)
+        email = lookup_email(unit, owner)
+        if owner or email:
+            wording = fields.get("invoice_wording") or ""
+            contact = f"Questions, contact {owner}" if owner else "Questions, contact"
+            if email:
+                contact += f" at {email}"
+            fields["invoice_wording"] = f"{wording}  {contact}"
+    except Exception:
+        pass
 
     return fields
 
@@ -57,14 +85,13 @@ async def extract(file: UploadFile = File(...)):
 async def generate(body: dict):
     output = fill_rebill_sheet(body)
 
-    unit    = re.sub(r"[^\w\s-]", "", body.get("unit") or "").strip()
-    wording = body.get("invoice_wording") or ""
-    # Extract the short description after "BB for" (e.g. "1234 - BB for brakes" → "brakes")
-    bb_match = re.search(r"bb for (.+)", wording, re.IGNORECASE)
-    reason  = re.sub(r"[^\w\s-]", "", bb_match.group(1) if bb_match else wording).strip()
-    now     = datetime.now()
+    unit     = re.sub(r"[^\w\s-]", "", body.get("unit") or "").strip()
+    customer = re.sub(r"[^\w\s-]", "", body.get("customer") or "").strip()
+    now      = datetime.now()
     date_str = f"{now.month}.{now.day}.{str(now.year)[2:]}"
-    filename = f"{unit} {reason} {date_str}.xlsm"
+
+    parts    = [p for p in [unit, customer, date_str] if p]
+    filename = " ".join(parts) + ".xlsm"
 
     return StreamingResponse(
         io.BytesIO(output),

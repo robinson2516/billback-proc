@@ -42,8 +42,10 @@ async function handleFile(file) {
 
 /* ── Populate Form ──────────────────────────────────────────── */
 function populateForm(data) {
+  document.getElementById('f-unit').value    = data.unit            ?? '';
   document.getElementById('f-vendor').value  = data.vendor          ?? '';
   document.getElementById('f-invoice').value = data.invoice_number  ?? '';
+  document.getElementById('f-customer').value = data.customer       ?? '';
   document.getElementById('f-wording').value = data.invoice_wording ?? '';
   document.getElementById('f-misc').value    = data.misc ?? '';
 
@@ -148,6 +150,7 @@ document.getElementById('btn-discard').addEventListener('click', () => {
 /* ── Generate / Download ─────────────────────────────────────── */
 document.getElementById('btn-generate').addEventListener('click', async () => {
   const payload = {
+    unit:             document.getElementById('f-unit').value,
     vendor:           document.getElementById('f-vendor').value,
     invoice_number:   document.getElementById('f-invoice').value,
     date:             document.getElementById('f-date').value,
