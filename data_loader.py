@@ -69,7 +69,7 @@ def _load_emails() -> dict:
         return _email_data
 
     ws = wb["Email Addresses"]
-    for row in ws.iter_rows(min_row=2, values_only=True):
+    for row in ws.iter_rows(min_row=1, values_only=True):
         key = row[0] if row else None
         email = row[1] if len(row) > 1 else None
         if key and email:
