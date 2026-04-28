@@ -8,49 +8,10 @@ TEMPLATE = BASE_DIR / "1 REBILL_BLANK_updated.xlsm"
 
 LINE_ITEM_START_ROW = 15   # line items begin at row 15
 
-# Vendor names from Keys sheet (col A, rows 2–15)
-_VENDOR_LIST = [
-    "Peterbilt of Utah",
-    "Vernal Petebilt",
-    "St. George Peterbilt",
-    "Idaho Falls Peterbilt",
-    "Boise Peterbilt",
-    "Caldwell Peterbilt",
-    "Jerome Peterbilt",
-    "Magic Valley Petebilt",
-    "Grand Junction Peterbilt",
-    "Elko Peterbilt",
-    "Utah Valley Peterbilt",
-    "Ogden Peterbilt",
-    "Salina Peterbilt",
-    "Ontario Peterbilt",
-]
-
-
 _VENDOR_ALIASES = {
     "salt lake city": "Peterbilt of Utah",
     "slc":            "Peterbilt of Utah",
 }
-
-
-def _match_vendor(name: str) -> str:
-    """Return the exact Keys-sheet vendor string closest to `name`, or `name` if no match."""
-    if not name:
-        return name
-    normalized = name.strip().lower()
-    # Check aliases first
-    if normalized in _VENDOR_ALIASES:
-        return _VENDOR_ALIASES[normalized]
-    # Exact match
-    for v in _VENDOR_LIST:
-        if v.lower() == normalized:
-            return v
-    # Any word match
-    words = set(normalized.split())
-    for v in _VENDOR_LIST:
-        if any(w in v.lower().split() for w in words):
-            return v
-    return name
 
 
 def _load_labor_rates(wb) -> dict:
@@ -69,6 +30,34 @@ def _load_labor_rates(wb) -> dict:
     return rates
 
 
+def _match_vendor(name: str, labor_rates: dict) -> str:
+    """Return the exact LaborRates vendor string closest to `name`, or `name` if no match."""
+    if not name:
+        return name
+    normalized = name.strip().lower()
+    # Check aliases first
+    if normalized in _VENDOR_ALIASES:
+        normalized = _VENDOR_ALIASES[normalized].lower()
+    # Exact match against LaborRates keys
+    for vendor_key in labor_rates:
+        if vendor_key == normalized:
+            return vendor_key.title().replace("Petebilt", "Petebilt")
+    # City-name match: input may be just the city (e.g. "Elko" → "Elko Peterbilt")
+    for vendor_key in labor_rates:
+        words = vendor_key.split()
+        if normalized in words:
+            return vendor_key  # return lowercase key; used only for rate lookup
+    # Partial word overlap (longest match wins)
+    input_words = set(normalized.split()) - {"peterbilt", "petebilt", "of", "the"}
+    best, best_score = None, 0
+    for vendor_key in labor_rates:
+        vendor_words = set(vendor_key.split()) - {"peterbilt", "petebilt", "of", "the"}
+        score = len(input_words & vendor_words)
+        if score > best_score:
+            best, best_score = vendor_key, score
+    return best if best else name
+
+
 def fill_rebill_sheet(data: dict) -> bytes:
     wb = openpyxl.load_workbook(TEMPLATE, keep_vba=True)
     ws = wb["Rebill Sheet"]
@@ -81,11 +70,10 @@ def fill_rebill_sheet(data: dict) -> bytes:
     ws.sheet_view.zoomScale = 100
 
     # ── Vendor & labor rates ──────────────────────────────────────
-    vendor_name = _match_vendor(data.get("vendor") or "")
-    ws.cell(row=1, column=4).value = vendor_name
-
     labor_rates = _load_labor_rates(wb)
-    current_rate, pac_rate = labor_rates.get(vendor_name.strip().lower(), (0.0, 0.0))
+    vendor_key  = _match_vendor(data.get("vendor") or "", labor_rates)
+    ws.cell(row=1, column=4).value = vendor_key
+    current_rate, pac_rate = labor_rates.get(vendor_key.strip().lower(), (0.0, 0.0))
 
     # ── Header fields ─────────────────────────────────────────────
     ws.cell(row=1, column=17).value = data.get("customer") or ""
