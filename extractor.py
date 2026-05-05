@@ -48,7 +48,7 @@ async def extract_fields(pdf_bytes: bytes) -> dict:
 
     message = client.messages.create(
         model="claude-opus-4-6",
-        max_tokens=1024,
+        max_tokens=4096,
         system=SYSTEM_PROMPT,
         messages=[{
             "role": "user",
@@ -67,8 +67,11 @@ async def extract_fields(pdf_bytes: bytes) -> dict:
     )
 
     raw = message.content[0].text.strip()
-    if raw.startswith("```"):
-        raw = raw.split("```")[1]
-        if raw.startswith("json"):
-            raw = raw[4:]
-    return json.loads(raw.strip())
+
+    # Extract JSON block — find outermost { ... }
+    start = raw.find("{")
+    end   = raw.rfind("}")
+    if start != -1 and end != -1:
+        raw = raw[start:end + 1]
+
+    return json.loads(raw)
